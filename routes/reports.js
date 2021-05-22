@@ -11,8 +11,12 @@ const protectRoute = require('../helpers/protectRoutes')
 console.log(getTodayDate())
 
 const FILE_TYPE_MAP = {
-    'application/pdf': 'pdf'
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+    'application/vnd.ms-excel': 'xls',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docs',
+    'application/msword': 'doc',
 }
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         const isValid = FILE_TYPE_MAP[file.mimetype];
@@ -73,6 +77,9 @@ router.post('/',
         let report = new Report({
             title: `${req.body.title || "Report"}_${getTodayDate().split(' ').join('_')}`,
             comment: req.body.comment,
+            db_name: req.body.db_name,
+            number_of_errors: req.body.number_of_errors,
+            company: req.body.company,
             report_file: `${base_path}${file_name}`,
             user: req.body.user,
         })
@@ -87,64 +94,67 @@ router.put('/:id',
     protectRoute.protect,
     protectRoute.restrictTo('admin'),
     async (req, res) => {
-    if (!mongoose.isValidObjectId(req.params.id)) {
-        return res.status(400).send('Report is no longer existed')
-    }
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(400).send('Report is no longer existed')
+        }
 
-    let user = await User.findById(req.body.user)
-    if (!user) return res.status(400).send('Invalid user')
+        let user = await User.findById(req.body.user)
+        if (!user) return res.status(400).send('Invalid user')
 
-    const report = await Report.findById(req.params.id)
-    if (!report) return res.status(404).send('Invalid report')
+        const report = await Report.findById(req.params.id)
+        if (!report) return res.status(404).send('Invalid report')
 
 
-    const file = req.file
-    let image_path
-    if (file) {
-        const file_name = req.file.filename
-        const base_path = `${req.protocol}://${req.get('host')}/public/reports/`
-        image_path = `${base_path}${file_name}`
-    } else {
-        image_path = report.report_file
-    }
+        const file = req.file
+        let image_path
+        if (file) {
+            const file_name = req.file.filename
+            const base_path = `${req.protocol}://${req.get('host')}/public/reports/`
+            image_path = `${base_path}${file_name}`
+        } else {
+            image_path = report.report_file
+        }
 
-    let updateReport = await Report.findByIdAndUpdate(
-        req.params.id, {
+        let updateReport = await Report.findByIdAndUpdate(
+            req.params.id, {
 
-        title: req.body.title,
-        comment: req.body.comment,
-        report_file: image_path,
-        user: req.body.user,
-    }, { new: true }
-    )
-    if (!updateReport) return res.status(400).send('report cannot be updated')
-    res.send(updateReport)
-})
+            title: req.body.title,
+            db_name: req.body.db_name,
+            number_of_errors: req.body.number_of_errors,
+            company: req.body.company,
+            comment: req.body.comment,
+            report_file: image_path,
+            user: req.body.user,
+        }, { new: true }
+        )
+        if (!updateReport) return res.status(400).send('report cannot be updated')
+        res.send(updateReport)
+    })
 
 router.delete('/:id',
     protectRoute.protect,
     protectRoute.restrictTo('admin'),
     (req, res) => {
-    Report.findByIdAndRemove(req.params.id)
-        .then(report => {
-            if (report) {
-                let file = report.report_file.split('/')[report.report_file.split('/').length - 1]
-                fs.unlinkSync('./public/reports/' + file);
-                return res.status(200).json({
-                    message: 'report is deleted'
-                })
-            } else {
-                return res.status(404).json({
-                    message: 'report not found'
-                })
-            }
-        })
-        .catch(err => {
-            console.log(err)
-            return res.status(400).json({
-                message: 'user not existed'
+        Report.findByIdAndRemove(req.params.id)
+            .then(report => {
+                if (report) {
+                    let file = report.report_file.split('/')[report.report_file.split('/').length - 1]
+                    fs.unlinkSync('./public/reports/' + file);
+                    return res.status(200).json({
+                        message: 'report is deleted'
+                    })
+                } else {
+                    return res.status(404).json({
+                        message: 'report not found'
+                    })
+                }
             })
-        })
-})
+            .catch(err => {
+                console.log(err)
+                return res.status(400).json({
+                    message: 'user not existed'
+                })
+            })
+    })
 
 module.exports = router

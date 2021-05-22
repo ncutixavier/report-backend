@@ -9,6 +9,18 @@ const reportSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    db_name: {
+        type: String,
+        required: true
+    },
+    company: {
+        type: String,
+        required: true
+    },
+    number_of_errors: {
+        type: Number,
+        required: true
+    },
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
