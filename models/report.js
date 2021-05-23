@@ -5,10 +5,10 @@ const reportSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    report_file: {
+    report_file: [{
         type: String,
         required: true
-    },
+    }],
     db_name: {
         type: String,
         required: true

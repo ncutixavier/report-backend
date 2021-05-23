@@ -15,6 +15,7 @@ const FILE_TYPE_MAP = {
     'application/vnd.ms-excel': 'xls',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docs',
     'application/msword': 'doc',
+    'application/pdf': 'pdf',
 }
 
 const storage = multer.diskStorage({
@@ -53,14 +54,24 @@ router.get('/:id', protectRoute.protect, async (req, res) => {
     const report = await Report.findById(req.params.id).populate('user')
     if (!report) {
         return res.status(404).json({
-            message: 'report is no longer existed'
+            message: 'Report is no longer existed'
+        })
+    }
+    res.status(200).send(report)
+})
+
+router.get('/:title', protectRoute.protect, async (req, res) => {
+    const report = await Report.findOne({ title: req.params.title }).populate('user')
+    if (!report) {
+        return res.status(404).json({
+            message: 'Report is no longer existed'
         })
     }
     res.status(200).send(report)
 })
 
 router.post('/',
-    uploadOptions.single('report_file'),
+    uploadOptions.array('report_file', 2),
     protectRoute.protect,
     protectRoute.restrictTo('admin'),
     async (req, res) => {
@@ -68,19 +79,23 @@ router.post('/',
         if (!user)
             return res.status(400).send('Invalid user')
 
-        let file = req.file
-        if (!file)
-            return res.status(400).send('Report file is required!')
-
-        const file_name = req.file.filename
+        const files = req.files
+        let reports_path = []
         const base_path = `${req.protocol}://${req.get('host')}/public/reports/`
+
+        if (files) {
+            files.map(file => {
+                reports_path.push(`${base_path}${file.filename}`)
+            })
+        }
+
         let report = new Report({
             title: `${req.body.title || "Report"}_${getTodayDate().split(' ').join('_')}`,
             comment: req.body.comment,
             db_name: req.body.db_name,
             number_of_errors: req.body.number_of_errors,
             company: req.body.company,
-            report_file: `${base_path}${file_name}`,
+            report_file: reports_path,
             user: req.body.user,
         })
         report = await report.save()
@@ -90,7 +105,7 @@ router.post('/',
     })
 
 router.put('/:id',
-    uploadOptions.single('report_file'),
+    uploadOptions.array('report_file', 2),
     protectRoute.protect,
     protectRoute.restrictTo('admin'),
     async (req, res) => {
@@ -102,28 +117,30 @@ router.put('/:id',
         if (!user) return res.status(400).send('Invalid user')
 
         const report = await Report.findById(req.params.id)
-        if (!report) return res.status(404).send('Invalid report')
+        if (!report) return res.status(404).send('Report doesn\'t exist')
 
 
-        const file = req.file
-        let image_path
-        if (file) {
-            const file_name = req.file.filename
-            const base_path = `${req.protocol}://${req.get('host')}/public/reports/`
-            image_path = `${base_path}${file_name}`
+        const files = req.files
+        const base_path = `${req.protocol}://${req.get('host')}/public/reports/`
+
+        let reports_path = []
+        if (files) {
+            files.map(file => {
+                reports_path.push(`${base_path}${file.filename}`)
+            })
         } else {
-            image_path = report.report_file
+            reports_path = report.report_file
         }
 
         let updateReport = await Report.findByIdAndUpdate(
             req.params.id, {
 
-            title: req.body.title,
+            // title: req.body.title,
             db_name: req.body.db_name,
             number_of_errors: req.body.number_of_errors,
             company: req.body.company,
             comment: req.body.comment,
-            report_file: image_path,
+            report_file: reports_path,
             user: req.body.user,
         }, { new: true }
         )
@@ -138,14 +155,18 @@ router.delete('/:id',
         Report.findByIdAndRemove(req.params.id)
             .then(report => {
                 if (report) {
-                    let file = report.report_file.split('/')[report.report_file.split('/').length - 1]
-                    fs.unlinkSync('./public/reports/' + file);
+                    report.report_file.map((rep) => {
+                        let file = rep.split('/')[rep.split('/').length - 1]
+                        fs.unlinkSync('./public/reports/' + file);
+                    })
+                    // let file = report.report_file.split('/')[report.report_file.split('/').length - 1]
+                    // fs.unlinkSync('./public/reports/' + file);
                     return res.status(200).json({
-                        message: 'report is deleted'
+                        message: 'Report has been deleted'
                     })
                 } else {
                     return res.status(404).json({
-                        message: 'report not found'
+                        message: 'Report not found'
                     })
                 }
             })
