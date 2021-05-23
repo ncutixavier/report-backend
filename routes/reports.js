@@ -18,25 +18,14 @@ const FILE_TYPE_MAP = {
     'application/pdf': 'pdf',
 }
 
-// const storage = multer.diskStorage({
-//     destination: function (req, file, cb) {
-//         const isValid = FILE_TYPE_MAP[file.mimetype];
-//         let upload_error = new Error('Invalid file type')
-//         if (isValid) {
-//             upload_error = null
-//         }
-//         cb(upload_error, 'public/reports')
-//     },
-//     filename: function (req, file, cb) {
-//         const fileName = file.originalname.split(' ').join('_')
-//         const extension = FILE_TYPE_MAP[file.mimetype]
-//         cb(null, `${fileName}_${Date.now()}.${extension}`)
-//     }
-// })
-
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'public/reports')
+        const isValid = FILE_TYPE_MAP[file.mimetype];
+        let upload_error = new Error('Invalid file type')
+        if (isValid) {
+            upload_error = null
+        }
+        cb(upload_error, 'public/reports')
     },
     filename: function (req, file, cb) {
         const fileName = file.originalname.split(' ').join('_')
@@ -44,6 +33,17 @@ const storage = multer.diskStorage({
         cb(null, `${file.fieldname}_${Date.now()}.${extension}`)
     }
 })
+
+// const storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//         cb(null, 'public/reports')
+//     },
+//     filename: function (req, file, cb) {
+//         const fileName = file.originalname.split(' ').join('_')
+//         const extension = FILE_TYPE_MAP[file.mimetype]
+//         cb(null, `${file.fieldname}_${Date.now()}.${extension}`)
+//     }
+// })
 
 const uploadOptions = multer({ storage: storage })
 
