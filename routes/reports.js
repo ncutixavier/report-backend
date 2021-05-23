@@ -13,24 +13,35 @@ console.log(getTodayDate())
 const FILE_TYPE_MAP = {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
     'application/vnd.ms-excel': 'xls',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docs',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
     'application/msword': 'doc',
     'application/pdf': 'pdf',
 }
 
+// const storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//         const isValid = FILE_TYPE_MAP[file.mimetype];
+//         let upload_error = new Error('Invalid file type')
+//         if (isValid) {
+//             upload_error = null
+//         }
+//         cb(upload_error, 'public/reports')
+//     },
+//     filename: function (req, file, cb) {
+//         const fileName = file.originalname.split(' ').join('_')
+//         const extension = FILE_TYPE_MAP[file.mimetype]
+//         cb(null, `${fileName}_${Date.now()}.${extension}`)
+//     }
+// })
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const isValid = FILE_TYPE_MAP[file.mimetype];
-        let upload_error = new Error('Invalid file type')
-        if (isValid) {
-            upload_error = null
-        }
-        cb(upload_error, 'public/reports')
+        cb(null, 'public/reports')
     },
     filename: function (req, file, cb) {
         const fileName = file.originalname.split(' ').join('_')
         const extension = FILE_TYPE_MAP[file.mimetype]
-        cb(null, `${fileName}_${Date.now()}.${extension}`)
+        cb(null, `${file.fieldname}_${Date.now()}.${extension}`)
     }
 })
 
