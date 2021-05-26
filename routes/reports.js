@@ -91,14 +91,18 @@ router.post('/',
             return res.status(400).send('Invalid user')
 
         const files = req.files
+        if (files.length < 0) {
+            console.log("no file")
+            return res.status(400).send('Files is required!')
+        }
+        console.log("Files:", files)
         let reports_path = []
         const base_path = `${req.protocol}://${req.get('host')}/public/reports/`
 
-        if (files) {
-            files.map(file => {
-                reports_path.push(`${base_path}${file.filename}`)
-            })
-        }
+        files.map(file => {
+            reports_path.push(`${base_path}${file.filename}`)
+        })
+
 
         let report = new Report({
             title: `${req.body.title || "Report"}_${getTodayDate().split(' ').join('_')}`,
