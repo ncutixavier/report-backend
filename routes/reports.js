@@ -136,7 +136,7 @@ router.put('/:id',
 
 
         const files = req.files
-        const base_path = `${req.protocol}://${req.get('host')}/public/reports/`
+        const base_path = `https://${req.get('host')}/public/reports/`
 
         let reports_path = []
         if (files) {
@@ -162,7 +162,13 @@ router.put('/:id',
         if (!updateReport) return res.status(400).send('report cannot be updated')
         res.send(updateReport)
     })
-
+// router.delete('/', async (req, res) => {
+//     await Report.deleteMany({ title: "Report_26_May_2021" }).then(function () {
+//         res.send("Data deleted")
+//     }).catch(function (error) {
+//         console.log(error); // Failure
+//     });
+// })
 router.delete('/:id',
     protectRoute.protect,
     protectRoute.restrictTo('admin'),
