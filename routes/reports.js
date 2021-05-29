@@ -97,7 +97,7 @@ router.post('/',
         }
         console.log("Files:", files)
         let reports_path = []
-        const base_path = `${req.protocol}://${req.get('host')}/public/reports/`
+        const base_path = `https://${req.get('host')}/public/reports/`
 
         files.map(file => {
             reports_path.push(`${base_path}${file.filename}`)
